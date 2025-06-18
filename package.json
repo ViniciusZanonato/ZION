@@ -1,0 +1,73 @@
+{
+  "name": "zion-chatbot-supremo",
+  "version": "1.0.0",
+  "description": "ZION: Chatbot Supremo - IA integrada com Gemini para Terminal",
+  "main": "zion.js",
+  "bin": {
+    "zion": "./zion.js"
+  },
+  "scripts": {
+    "start": "node zion.js",
+    "setup": "node setup.js",
+    "dev": "nodemon zion.js",
+    "demo": "node demo.js",
+    "test": "jest",
+    "test:unit": "jest --testMatch='**/*.test.js'",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "validate": "npm run lint && npm run test",
+    "backup": "node utils/backup.js",
+    "health": "node utils/health-check.js"
+  },
+  "keywords": [
+    "chatbot",
+    "ai",
+    "gemini",
+    "nodejs",
+    "terminal",
+    "cli"
+  ],
+  "author": "Carlos Zanonato",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.2.1",
+    "axios": "^1.10.0",
+    "bcrypt": "^5.1.1",
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.11.0",
+    "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.3",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "figlet": "^1.6.0",
+    "gradient-string": "^2.0.2",
+    "helmet": "^7.1.0",
+    "inquirer": "^8.2.6",
+    "joi": "^17.11.0",
+    "mathjs": "^12.4.0",
+    "moment": "^2.30.1",
+    "multer": "^2.0.1",
+    "node-fetch": "^2.7.0",
+    "ora": "^5.4.1",
+    "pdf-parse": "^1.1.1",
+    "pdf2pic": "^3.2.0",
+    "pino": "^8.16.0",
+    "say": "^0.16.0",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "chai": "^4.3.10",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "mocha": "^10.2.0",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.1.0",
+    "supertest": "^6.3.3"
+  }
+}
