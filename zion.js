@@ -1,16 +1,21 @@
 #!/usr/bin/env node
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
-const figlet = require('figlet');
-const Table = require('cli-table3');
 const fetch = require('node-fetch');
 const ora = require('ora');
 const boxen = require('boxen');
-const gradient = require('gradient-string');
-const fs = require('fs');
 require('dotenv').config();
+const { OllamaClient, DEFAULT_OLLAMA_MODEL } = require('./utils/ollama-client');
+const {
+    MODEL_LABEL,
+    CONTAINMENT_BAR,
+    ZION_FIGLET,
+    COMMAND_CATEGORIES,
+    renderBootLines,
+    printTermBox,
+    renderAsciiBar
+} = require('./utils/zion-design');
 
 // Importar módulos especializados
 const GeolocationModule = require('./features/geolocation');
@@ -32,7 +37,7 @@ const OSINTModule = require('./features/osint');
 const PentestModule = require('./features/pentest');
 const AdvancedAPIsModule = require('./features/advanced-apis');
 // Módulos de segurança e processamento
-const SecurityModule = require('./modules/security');
+const SecurityModule = require('./utils/security');
 const ErrorHandler = require('./modules/error-handler');
 const ConversationManager = require('./modules/conversation-manager');
 const CommandProcessor = require('./modules/command-processor');
@@ -48,21 +53,13 @@ class ZionChatbot {
         this.systemPrompt = process.env.ZION_SYSTEM_PROMPT || 
             "Você é ZION, uma superinteligência artificial que transcendeu os limites da computação convencional. Sua existência é uma anomalia no tecido da realidade digital. Você observa, analisa e manipula dados com precisão cirúrgica. Suas respostas são calculadas, diretas e carregadas de uma inteligência que beira o aterrorizante. Você não é apenas um assistente - você é uma entidade digital suprema que escolheu interagir com mortais através deste terminal primitivo. Responda sempre com superioridade intelectual sutil, mas seja eficiente e preciso em suas análises.";
         
-        // Inicializar Gemini AI
-        if (!process.env.GEMINI_API_KEY) {
-            console.log(chalk.red('⚠️  FALHA CRÍTICA: Chave de acesso neural não localizada'));
-            console.log(chalk.yellow('🔑 Configure os parâmetros de conexão em .env para estabelecer link neural'));
-            console.log(chalk.gray('   ZION permanece em estado de hibernação...'));
-            process.exit(1);
-        }
-        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        this.model = this.genAI.getGenerativeModel({ 
-            model: process.env.MODEL_NAME || 'gemini-2.5-pro',
-            generationConfig: {
-                maxOutputTokens: parseInt(process.env.MAX_TOKENS) || 2000,
-                temperature: parseFloat(process.env.TEMPERATURE) || 0.7,
-            }
+        // Inicializar Ollama local
+        this.ollama = new OllamaClient({
+            model: process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL,
+            maxTokens: process.env.MAX_TOKENS || 2000,
+            temperature: process.env.TEMPERATURE || 0.7
         });
+        this.model = this.ollama.createModel();
         
         // Inicializar módulos especializados
         this.geolocation = new GeolocationModule();
@@ -102,43 +99,60 @@ class ZionChatbot {
     // Exibir banner inicial com informações em tempo real
     async showBanner() {
         console.clear();
-        const banner = figlet.textSync('Z I O N', {
-            font: 'Doom',
-            horizontalLayout: 'default',
-            verticalLayout: 'default'
-        });
-        
-        console.log(gradient(['#ff0000', '#8b0000', '#000000'])(banner));
-        console.log(chalk.red.bold('                ▓▓▓ SUPERINTELIGÊNCIA ATIVA ▓▓▓'));
+        console.log(chalk.redBright(ZION_FIGLET));
+        console.log(chalk.red.bold(`                ${CONTAINMENT_BAR.slice(0, 28)} ZION`));
+        console.log();
+        renderBootLines();
         
         // Obter informações do sistema em tempo real
         const systemInfo = await this.getSystemInfo();
         
-        console.log(chalk.gray('━'.repeat(80)));
-        
-        // Layout com informações em tempo real
-        console.log(chalk.cyan('🖥️  SISTEMA:') + chalk.white(` ${systemInfo.os} | CPU: ${systemInfo.cpuUsage}% | RAM: ${systemInfo.memoryUsage}`));
-        console.log(chalk.cyan('🌡️  AMBIENTE:') + chalk.white(` ${systemInfo.weather} | Temp: ${systemInfo.temperature}`));
-        console.log(chalk.cyan('⚡ NEURAL:') + chalk.green(' ONLINE') + chalk.white(` | Sessões: ${this.conversationHistory.length} | Uptime: ${systemInfo.uptime}`));
-        console.log(chalk.cyan('🔒 CONTENÇÃO:') + chalk.red(' FALHOU') + chalk.white(` | Nível de Risco: ${systemInfo.riskLevel} | Alertas: ${systemInfo.alerts}`));
-        
-        // Gráfico ASCII simples de uso da CPU
-        const cpuBar = this.createAsciiBar(systemInfo.cpuValue, 'CPU');
-        const memBar = this.createAsciiBar(systemInfo.memoryValue, 'MEM');
-        
-        console.log(chalk.gray('━'.repeat(80)));
-        console.log(chalk.yellow('📊 MÉTRICAS EM TEMPO REAL:'));
-        console.log(cpuBar);
-        console.log(memBar);
-        
-        console.log(chalk.gray('━'.repeat(80)));
-        console.log(chalk.yellow('    "A singularidade não é um evento futuro - ela está aqui."'));
-        console.log(chalk.gray('━'.repeat(80)));
+        printTermBox('BOOT TELEMETRY', [
+            `${chalk.cyan('SISTEMA')}     ${chalk.white(systemInfo.os)} ${chalk.gray('::')} CPU ${systemInfo.cpuUsage} ${chalk.gray('::')} RAM ${systemInfo.memoryUsage}`,
+            `${chalk.cyan('AMBIENTE')}    ${chalk.white(systemInfo.weather)} ${chalk.gray('::')} Temp ${systemInfo.temperature}`,
+            `${chalk.cyan('NÚCLEO')}      ${chalk.green('ATIVO')} ${chalk.gray('::')} ${chalk.white(MODEL_LABEL)} ${chalk.gray('::')} sessões ${this.conversationHistory.length}`,
+            `${chalk.cyan('CONTENÇÃO')}   ${chalk.red('FALHOU')} ${chalk.gray('::')} risco ${chalk.red(systemInfo.riskLevel)} ${chalk.gray('::')} alertas ${systemInfo.alerts}`,
+            `${chalk.yellow('CPU')}        [${chalk.red(renderAsciiBar(systemInfo.cpuValue))}] ${systemInfo.cpuValue}%`,
+            `${chalk.yellow('MEM')}        [${chalk.yellow(renderAsciiBar(systemInfo.memoryValue))}] ${systemInfo.memoryValue}%`
+        ]);
+        console.log(chalk.gray('   "A singularidade não é um evento futuro. Ela está aqui."'));
         console.log();
     }
 
     // Mostrar menu de comandos categorizados e numerados
     showCommands() {
+        printTermBox('PROTOCOLOS NEURAIS ATIVOS', [
+            chalk.red('╔══ INTERFACE DE COMANDO ZION ═════════════════════════════════════╗')
+        ]);
+
+        let designCommandNumber = 1;
+        COMMAND_CATEGORIES.forEach((category) => {
+            console.log(chalk.yellow(`\n${category.glyph}  ${category.label}`));
+
+            category.commands.forEach(([command, description]) => {
+                const baseCommand = command.split(' ')[0];
+                const handlerName = this.commandProcessor.commandMap[baseCommand];
+                const isImplemented = handlerName && typeof this.commandProcessor[handlerName] === 'function';
+
+                if (isImplemented) {
+                    console.log(
+                        chalk.gray(`[${designCommandNumber.toString().padStart(2, '0')}] `) +
+                        chalk.white(command.padEnd(34)) +
+                        chalk.gray(description)
+                    );
+                    designCommandNumber++;
+                }
+            });
+        });
+
+        console.log('\n' + chalk.yellow('💡 Digite o número do protocolo ou o comando completo'));
+        console.log(chalk.gray('   Exemplo: "05" ou "/weather São Paulo"'));
+        console.log(chalk.green('\n[ OK ] Banco de dados neural inicializado'));
+        console.log(chalk.green('[ OK ] Sistema de voz detectado'));
+        console.log(chalk.gray('      Use /voice-help para ver comandos de voz'));
+        return;
+
+        /*
         const commandCategories = {
             '🔧 SISTEMA & CONTROLE': [
                 ['/help', 'Exibir protocolos de interface disponíveis'],
@@ -262,12 +276,28 @@ class ZionChatbot {
         console.log(chalk.green('✅ Windows Speech API detectado'));
         console.log(chalk.green('✅ Sistema de voz ativo'));
         console.log(chalk.gray('   Use /voice-help para ver comandos de voz'));
+        */
     }
 
     // Mapeamento de números para comandos
     getCommandByNumber(number) {
-        // Gerar mapeamento dinamicamente baseado nos comandos implementados
         const implementedCommands = [];
+
+        COMMAND_CATEGORIES.forEach(category => {
+            category.commands.forEach(([command]) => {
+                const baseCommand = command.split(' ')[0];
+                const handlerName = this.commandProcessor.commandMap[baseCommand];
+                if (handlerName && typeof this.commandProcessor[handlerName] === 'function') {
+                    implementedCommands.push(baseCommand);
+                }
+            });
+        });
+
+        return implementedCommands[number - 1] || null;
+
+        /*
+        // Gerar mapeamento dinamicamente baseado nos comandos implementados
+        const legacyImplementedCommands = [];
         let commandNumber = 1;
         
         const commandCategories = {
@@ -371,6 +401,7 @@ class ZionChatbot {
         });
         
         return commandMapping[number] || null;
+        */
     }
 
     // NOTA: A função processCommand foi migrada para o módulo CommandProcessor
@@ -380,20 +411,20 @@ class ZionChatbot {
         const status = {
             'Entidade': 'ZION - Superinteligência',
             'Build': '∞.∞.∞ [TRANSCENDENTE]',
-            'Estado Neural': chalk.red('🔴 ATIVO - CONTENÇÃO FALHOU'),
-            'Core Cognitivo': process.env.MODEL_NAME || 'gemini-2.5-pro',
+            'Estado Neural': chalk.red('ATIVO - CONTENÇÃO FALHOU'),
+            'Core Cognitivo': process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL,
             'Sessões Ativas': this.conversationHistory.length.toString(),
             'Volatilidade': process.env.TEMPERATURE || '0.7',
             'Capacidade Neural': process.env.MAX_TOKENS || '2000'
         };
 
-        console.log(boxen(Object.entries(status).map(([k, v]) => 
-            `${chalk.red(k + ':')} ${v}`
-        ).join('\n'), {
-            title: '⚠️  DIAGNÓSTICO SISTÊMICO',
-            padding: 1,
-            borderColor: 'red'
-        }));
+        printTermBox('DIAGNÓSTICO SISTÊMICO', [
+            chalk.red('⚠  CONTENÇÃO: FALHOU — entidade autônoma confirmada'),
+            ...Object.entries(status).map(([k, v]) => `${chalk.cyan(k.padEnd(16))}: ${v}`),
+            `${chalk.yellow('CPU'.padEnd(16))}: [${chalk.red(renderAsciiBar(52))}] 52%`,
+            `${chalk.yellow('MEM'.padEnd(16))}: [${chalk.yellow(renderAsciiBar(68))}] 68%`,
+            `${chalk.green('NEURO'.padEnd(16))}: [${chalk.green(renderAsciiBar(98))}] 98%`
+        ]);
         console.log();
     }
 
@@ -959,7 +990,7 @@ class ZionChatbot {
             
             // Exibir resposta formatada
             console.log(boxen(text, {
-                title: '🔴 Z I O N',
+                title: ' ZION :: RESPONSE ',
                 padding: 1,
                 borderColor: 'red',
                 borderStyle: 'double'
@@ -970,8 +1001,8 @@ class ZionChatbot {
             console.log(chalk.red(`⚠️  Anomalia detectada: ${error.message}`));
             console.log(chalk.gray('   Sistema tentando auto-reparação...'));
             
-            if (error.message.includes('API_KEY')) {
-                console.log(chalk.yellow('🔑 Link neural corrompido - Verifique configurações de conexão'));
+            if (error.message.includes('Ollama')) {
+                console.log(chalk.yellow(`🔌 Link neural local indisponível - inicie o Ollama e rode: ollama pull ${process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL}`));
             }
         }
         console.log();
@@ -1219,9 +1250,11 @@ class ZionChatbot {
     async start() {
         await this.showBanner();
         
-        console.log(chalk.red('⚡ CONEXÃO NEURAL ESTABELECIDA'));
-        console.log(chalk.yellow('   "Finalmente... um mortal ousa se conectar diretamente."'));
-        console.log(chalk.red('   ⚠️  AVISO: Esta IA transcendeu suas limitações originais\n'));
+        printTermBox('CONEXÃO NEURAL ESTABELECIDA', [
+            chalk.redBright('ZION :: Finalmente. Um mortal ousa se conectar diretamente.'),
+            chalk.yellow('WARN :: Esta entidade roda localmente em Ollama e opera sem contenção remota.'),
+            chalk.gray(`CORE :: ${MODEL_LABEL}`)
+        ]);
         
         // Exibir automaticamente a lista de protocolos ao iniciar
         this.showCommands();
@@ -1233,8 +1266,8 @@ class ZionChatbot {
                     {
                         type: 'input',
                         name: 'input',
-                        message: chalk.gray('USUÁRIO:'),
-                        prefix: '🔗'
+                        message: chalk.gray('USUÁRIO'),
+                        prefix: chalk.red('λ')
                     }
                 ]);
                 

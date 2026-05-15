@@ -1,21 +1,19 @@
 const fs = require('fs');
 const path = require('path');
 const pdfParse = require('pdf-parse');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const chalk = require('chalk');
 const boxen = require('boxen');
 const ora = require('ora');
+const { OllamaClient, DEFAULT_OLLAMA_MODEL } = require('../utils/ollama-client');
 
 class PDFAnalyzer {
     constructor() {
-        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        this.model = this.genAI.getGenerativeModel({ 
-            model: process.env.MODEL_NAME || 'gemini-2.0-flash-exp',
-            generationConfig: {
-                maxOutputTokens: parseInt(process.env.MAX_TOKENS) || 8000,
-                temperature: parseFloat(process.env.TEMPERATURE) || 0.3,
-            }
+        this.ollama = new OllamaClient({
+            model: process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL,
+            maxTokens: process.env.PDF_MAX_TOKENS || process.env.MAX_TOKENS || 8000,
+            temperature: process.env.PDF_TEMPERATURE || process.env.TEMPERATURE || 0.3
         });
+        this.model = this.ollama.createModel();
     }
 
     // Analisar PDF completo
@@ -66,7 +64,7 @@ Forneça:
 Mantenha o tom superior e calculado característico de ZION.`;
             }
 
-            // Gerar análise com Gemini
+            // Gerar análise com Ollama
             const result = await this.model.generateContent(analysisPrompt);
             const response = await result.response;
             const analysis = response.text();
@@ -109,8 +107,8 @@ Mantenha o tom superior e calculado característico de ZION.`;
             spinner.fail(chalk.red('FALHA NA ANÁLISE NEURAL DO DOCUMENTO'));
             console.log(chalk.red(`⚠️  Erro detectado: ${error.message}`));
             
-            if (error.message.includes('API_KEY')) {
-                console.log(chalk.yellow('🔑 Chave de acesso neural corrompida - Verifique GEMINI_API_KEY'));
+            if (error.message.includes('Ollama')) {
+                console.log(chalk.yellow(`🔌 Ollama indisponível - inicie o serviço e rode: ollama pull ${process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL}`));
             } else if (error.message.includes('não encontrado')) {
                 console.log(chalk.gray('   Verifique o caminho do arquivo e tente novamente'));
             } else if (error.message.includes('texto extraível')) {

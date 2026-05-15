@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime data
+data/*.db
+data/*.db-*
+logs/
+*.log
+
+# Generated reports and caches
+coverage/
+.nyc_output/
+.cache/
+dist/
+build/
+
+# Local backups and scratch files
+backups/
+*.bak
+*.tmp
+test-write.txt
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

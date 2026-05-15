@@ -1,7 +1,7 @@
 {
-  "name": "zion-chatbot-supremo",
+  "name": "zion-local-ai-cli",
   "version": "1.0.0",
-  "description": "ZION: Chatbot Supremo - IA integrada com Gemini para Terminal",
+  "description": "Local-first AI terminal assistant powered by Ollama",
   "main": "zion.js",
   "bin": {
     "zion": "./zion.js"
@@ -10,7 +10,6 @@
     "start": "node zion.js",
     "setup": "node setup.js",
     "dev": "nodemon zion.js",
-    "demo": "node demo.js",
     "test": "jest",
     "test:unit": "jest --testMatch='**/*.test.js'",
     "test:watch": "jest --watch",
@@ -18,22 +17,19 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "validate": "npm run lint && npm run test",
-    "backup": "node utils/backup.js",
-    "health": "node utils/health-check.js"
+    "validate": "npm run lint && npm run test"
   },
   "keywords": [
     "chatbot",
     "ai",
-    "gemini",
+    "ollama",
     "nodejs",
     "terminal",
     "cli"
   ],
-  "author": "Carlos Zanonato",
+  "author": "Vinicius Zanonato",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.2.1",
     "axios": "^1.10.0",
     "bcrypt": "^5.1.1",
     "blessed": "^0.1.81",

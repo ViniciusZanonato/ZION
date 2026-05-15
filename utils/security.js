@@ -1,6 +1,13 @@
 const mathjs = require('mathjs');
 const winston = require('winston');
 const joi = require('joi');
+const fs = require('fs');
+const path = require('path');
+
+const logsDir = path.join(__dirname, '..', 'logs');
+if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+}
 
 // Configuração do logger de segurança
 const securityLogger = winston.createLogger({
@@ -10,7 +17,7 @@ const securityLogger = winston.createLogger({
         winston.format.json()
     ),
     transports: [
-        new winston.transports.File({ filename: 'logs/security.log' }),
+        new winston.transports.File({ filename: path.join(logsDir, 'security.log') }),
         new winston.transports.Console({ 
             format: winston.format.simple(),
             level: 'error'
@@ -29,9 +36,7 @@ class SecurityModule {
         // Limitar avaliação apenas a operações matemáticas seguras
         this.math.import({
             import: function () { throw new Error('Function import is disabled') },
-            createUnit: function () { throw new Error('Function createUnit is disabled') },
-            evaluate: function () { throw new Error('Function evaluate is disabled') },
-            parse: function () { throw new Error('Function parse is disabled') }
+            createUnit: function () { throw new Error('Function createUnit is disabled') }
         }, { override: true });
     }
     

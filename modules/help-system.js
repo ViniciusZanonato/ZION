@@ -1,6 +1,7 @@
 const chalk = require('chalk');
 const boxen = require('boxen');
 const Table = require('cli-table3');
+const { COMMAND_CATEGORIES, printTermBox } = require('../utils/zion-design');
 
 class HelpSystem {
     constructor() {
@@ -455,35 +456,24 @@ class HelpSystem {
 
     // Ajuda geral (lista todas as categorias)
     showGeneralHelp() {
-        console.log(boxen(
-            chalk.red.bold('🧠 SISTEMA DE AJUDA CONTEXTUAL ZION'),
-            {
-                title: '❓ AJUDA NEURAL',
-                titleAlignment: 'center',
-                padding: 1,
-                borderColor: 'red',
-                borderStyle: 'double'
-            }
-        ));
+        printTermBox('PROTOCOLOS NEURAIS ATIVOS', [
+            chalk.red('╔══ AJUDA CONTEXTUAL ZION ════════════════════════════════════════╗')
+        ]);
 
-        console.log(chalk.yellow('\n💡 USO: /help [comando] para ajuda específica\n'));
+        console.log(chalk.yellow('\nUSO: /help [comando] para ajuda específica\n'));
 
-        Object.entries(this.categories).forEach(([categoryName, categoryInfo]) => {
-            console.log(chalk.red.bold(`\n${categoryInfo.icon} ${categoryName.toUpperCase()}`));
-            console.log(chalk.gray(`   ${categoryInfo.description}`));
-            console.log(chalk.gray('━'.repeat(50)));
-            
-            categoryInfo.commands.forEach(command => {
-                const helpData = this.commandHelp[command];
-                const description = helpData ? helpData.description : 'Comando disponível';
-                console.log(chalk.cyan(`   ${command.padEnd(20)} `) + chalk.white(description));
+        COMMAND_CATEGORIES.forEach(category => {
+            console.log(chalk.yellow(`${category.glyph}  ${category.label}`));
+            category.commands.forEach(([command, description]) => {
+                console.log(chalk.gray('   ') + chalk.white(command.padEnd(34)) + chalk.gray(description));
             });
+            console.log();
         });
 
-        console.log(chalk.yellow('\n🎯 EXEMPLOS DE USO:'));
+        console.log(chalk.yellow('EXEMPLOS DE USO:'));
         console.log(chalk.gray('   /help weather          - Ajuda sobre comando weather'));
         console.log(chalk.gray('   /help osint-domain     - Ajuda sobre análise OSINT'));
-        console.log(chalk.gray('   /help Sistema          - Todos comandos de sistema'));
+        console.log(chalk.gray('   /help Sistema          - Todos os comandos de sistema'));
         console.log();
     }
 

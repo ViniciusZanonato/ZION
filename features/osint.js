@@ -311,8 +311,7 @@ class OSINTModule {
     // Consultar WHOIS via WhoisFreaks API
     async getWhoisFromWhoisFreaks(domain) {
         try {
-            // Using provided API key
-            const apiKey = process.env.WHOISFREAKS_API_KEY || 'f66460afcfc3415ba3923a4478b3cd4f';
+            const apiKey = process.env.WHOISFREAKS_API_KEY;
             if (!apiKey) {
                 console.log(chalk.gray('   WhoisFreaks API key não configurada, pulando...'));
                 return null;
@@ -408,8 +407,7 @@ class OSINTModule {
     // Consultar WHOIS via WhoisJSON API
     async getWhoisFromWhoisJSON(domain) {
         try {
-            // Using provided API key
-            const apiKey = process.env.WHOISJSON_API_KEY || '66e6a5b1176677be5d9663130acf7c1151fc77511dad71aae7a5ed4e3d8827e2';
+            const apiKey = process.env.WHOISJSON_API_KEY;
             if (!apiKey) {
                 console.log(chalk.gray('   WhoisJSON API key não configurada, pulando...'));
                 return null;
@@ -810,8 +808,7 @@ class OSINTModule {
     // Buscar informações no Shodan
     async searchShodan(ip) {
         try {
-            // Using provided API key as fallback
-            const apiKey = process.env.SHODAN_API_KEY || '2ELIpzyAXwgahWNM0TrRCgJ9qrBCpRG4';
+            const apiKey = process.env.SHODAN_API_KEY;
             if (!apiKey) {
                 console.log(chalk.yellow('⚠️  API Key do Shodan não configurada, usando dados simulados'));
                 return {

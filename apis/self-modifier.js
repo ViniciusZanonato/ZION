@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
 const boxen = require('boxen');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { OllamaClient, DEFAULT_OLLAMA_MODEL } = require('../utils/ollama-client');
 
 class SelfModifier {
     constructor() {
@@ -31,17 +31,13 @@ class SelfModifier {
             fs.mkdirSync(this.backupDir, { recursive: true });
         }
         
-        // Inicializar Gemini para análise de código
-        if (process.env.GEMINI_API_KEY) {
-            this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-            this.model = this.genAI.getGenerativeModel({ 
-                model: 'gemini-1.5-pro',
-                generationConfig: {
-                    maxOutputTokens: 4000,
-                    temperature: 0.1, // Mais conservador para modificações de código
-                }
-            });
-        }
+        // Inicializar Ollama para análise de código
+        this.ollama = new OllamaClient({
+            model: process.env.OLLAMA_CODE_MODEL || process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL,
+            maxTokens: process.env.CODE_MAX_TOKENS || 4000,
+            temperature: process.env.CODE_TEMPERATURE || 0.1
+        });
+        this.model = this.ollama.createModel();
     }
 
     // Listar arquivos modificáveis

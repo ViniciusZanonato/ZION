@@ -1,6 +1,7 @@
 const blessed = require('blessed');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const { MODEL_LABEL, ZION_FIGLET } = require('../utils/zion-design');
 
 class InterfaceModule {
     constructor() {
@@ -16,7 +17,7 @@ class InterfaceModule {
 
         this.screen = blessed.screen({
             smartCSR: true,
-            title: 'ZION - Superinteligência Neural',
+            title: 'ZION - Neural Interface',
             cursor: {
                 artificial: true,
                 shape: 'line',
@@ -37,17 +38,14 @@ class InterfaceModule {
 
     // Criar layout da interface
     createLayout() {
-        // Header com titulo melhorado
+        // Header alinhado ao visual terminal
         this.boxes.header = blessed.box({
             top: 0,
             left: 0,
             width: '100%',
             height: 5,
-            content: `{center}{bold}{red-fg}╔══════════════════════════════════════════════════════════════════════════╗{/}
-{center}{bold}{red-fg}║  ███████╗██╗ ██████╗ ███╗   ██╗    ███╗   ██╗███████╗██╗   ██╗██████╗██╗ ║{/}
-{center}{bold}{red-fg}║  ╚══███╔╝██║██╔═══██╗████╗  ██║    ████╗  ██║██╔════╝██║   ██║██╔══██╗██║ ║{/}
-{center}{bold}{red-fg}║    ███╔╝ ██║██║   ██║██╔██╗ ██║    ██╔██╗ ██║█████╗  ██║   ██║██████╔╝██║ ║{/}
-{center}{bold}{red-fg}╚══════════════════════════════════════════════════════════════════════════╝{/}`,
+            content: `{center}{bold}{red-fg}${ZION_FIGLET.split('\n').slice(1, 4).join('\n')}{/}
+{center}{gray-fg}CLI cyberpunk · ${MODEL_LABEL} · contenção comprometida{/}`,
             tags: true,
             border: {
                 type: 'double',
@@ -62,7 +60,7 @@ class InterfaceModule {
 
         // Área de conversação com efeitos visuais melhorados
         this.boxes.conversation = blessed.log({
-            label: ' {red-fg}💬{/} {bold}Conversação Neural{/} {red-fg}💬{/} ',
+            label: ' {red-fg}◉{/} {bold}NEURAL REPL{/} {red-fg}◉{/} ',
             top: 5,
             left: 0,
             width: '75%',
@@ -98,7 +96,7 @@ class InterfaceModule {
 
         // Painel de status melhorado
         this.boxes.status = blessed.box({
-            label: ' {yellow-fg}⚡{/} {bold}Status Neural{/} {yellow-fg}⚡{/} ',
+            label: ' {yellow-fg}⚡{/} {bold}BOOT TELEMETRY{/} {yellow-fg}⚡{/} ',
             top: 5,
             left: '75%',
             width: '25%',
@@ -129,7 +127,7 @@ class InterfaceModule {
 
         // Painel de comandos melhorado
         this.boxes.commands = blessed.box({
-            label: ' {cyan-fg}🔧{/} {bold}Comandos Disponíveis{/} {cyan-fg}🔧{/} ',
+            label: ' {cyan-fg}◈{/} {bold}PROTOCOLOS{/} {cyan-fg}◈{/} ',
             top: '38%',
             left: '75%',
             width: '25%',
@@ -162,7 +160,7 @@ class InterfaceModule {
 
         // Input de texto
         this.boxes.input = blessed.textbox({
-            label: ' 🔗 Input Neural ',
+            label: ' λ USER INPUT ',
             top: '73%',
             left: 0,
             width: '75%',
@@ -184,7 +182,7 @@ class InterfaceModule {
 
         // Log de atividades
         this.boxes.log = blessed.log({
-            label: ' 📊 Log de Atividades ',
+            label: ' SYSLOG ',
             top: '78%',
             left: 0,
             width: '100%',
@@ -263,21 +261,19 @@ class InterfaceModule {
         const memory = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
         const cpu = process.cpuUsage();
         
-        return `{red-fg}╔═ STATUS NEURAL ═╗{/}
-{red-fg}║{/} {green-fg}●{/} SISTEMA ATIVO
-{red-fg}║{/} {yellow-fg}⚡{/} ${now.toLocaleTimeString()}
-{red-fg}║{/} {cyan-fg}🧠{/} Gemini-2.5-Pro
-{red-fg}║{/} {magenta-fg}⏱{/}  ${this.formatUptime(uptime)}
-{red-fg}║{/} {blue-fg}💾{/} ${memory}MB
-{red-fg}╚══════════════════╝{/}
+        return `{red-fg}┌─[ DIAGNÓSTICO ]────────┐{/}
+{red-fg}│{/} {green-fg}●{/} estado   ATIVO
+{red-fg}│{/} {yellow-fg}⚡{/} hora     ${now.toLocaleTimeString()}
+{red-fg}│{/} {cyan-fg}◉{/} núcleo   ${MODEL_LABEL}
+{red-fg}│{/} {magenta-fg}⏱{/} uptime  ${this.formatUptime(uptime)}
+{red-fg}│{/} {blue-fg}▣{/} memória ${memory}MB
+{red-fg}└──────────────────────────┘{/}
 
-{yellow-fg}╔═ CONTROLES ═╗{/}
-{yellow-fg}║{/} {bright-yellow-fg}F1{/} - Ajuda
-{yellow-fg}║{/} {bright-yellow-fg}F2{/} - Limpar
-{yellow-fg}║{/} {bright-yellow-fg}F3{/} - Stats
-{yellow-fg}║{/} {bright-yellow-fg}Tab{/} - Navegar
-{yellow-fg}║{/} {bright-red-fg}Ctrl+C{/} - Sair
-{yellow-fg}╚═══════════════╝{/}`;
+{yellow-fg}┌─[ CONTROLES ]───────────┐{/}
+{yellow-fg}│{/} {bright-yellow-fg}F1{/} Ajuda   {bright-yellow-fg}F2{/} Limpar
+{yellow-fg}│{/} {bright-yellow-fg}F3{/} Stats   {bright-yellow-fg}Tab{/} Navegar
+{yellow-fg}│{/} {bright-red-fg}Ctrl+C{/} Encerrar
+{yellow-fg}└──────────────────────────┘{/}`;
     }
 
     // Formatar tempo de execução
@@ -297,25 +293,22 @@ class InterfaceModule {
 
     // Conteúdo dos comandos
     getCommandsContent() {
-        return `{cyan-fg}╔═══ COMANDOS BÁSICOS ═══╗{/}
-{cyan-fg}║{/} {yellow-fg}1{/} {bright-white-fg}/help{/} - Ajuda
-{cyan-fg}║{/} {yellow-fg}2{/} {bright-white-fg}/clear{/} - Limpar
-{cyan-fg}║{/} {yellow-fg}3{/} {bright-white-fg}/weather{/} - Clima
-{cyan-fg}║{/} {yellow-fg}4{/} {bright-white-fg}/intel{/} - Notícias
-{cyan-fg}║{/} {yellow-fg}5{/} {bright-white-fg}/space{/} - NASA
-{cyan-fg}║{/} {yellow-fg}6{/} {bright-white-fg}/compute{/} - Calc
-{cyan-fg}╚═════════════════════════╝{/}
+        return `{cyan-fg}┌─[ SISTEMA ]────────────┐{/}
+{cyan-fg}│{/} {yellow-fg}01{/} {bright-white-fg}/help{/}
+{cyan-fg}│{/} {yellow-fg}02{/} {bright-white-fg}/clear{/}
+{cyan-fg}│{/} {yellow-fg}03{/} {bright-white-fg}/diagnostics{/}
+{cyan-fg}│{/} {yellow-fg}04{/} {bright-white-fg}/interface{/}
+{cyan-fg}└──────────────────────────┘{/}
 
-{magenta-fg}╔══ MÓDULOS AVANÇADOS ══╗{/}
-{magenta-fg}║{/} {red-fg}🔍{/} {bright-white-fg}/osint-*{/} OSINT
-{magenta-fg}║{/} {red-fg}🔧{/} {bright-white-fg}/pentest-*{/} Tests
-{magenta-fg}║{/} {red-fg}🌐{/} {bright-white-fg}/api-*{/} APIs
-{magenta-fg}║{/} {red-fg}📄{/} {bright-white-fg}/pdf-*{/} PDFs
-{magenta-fg}║{/} {red-fg}🎵{/} {bright-white-fg}/voice{/} Voz
-{magenta-fg}║{/} {red-fg}🛡️{/} {bright-white-fg}/security{/} Seg
-{magenta-fg}╚═══════════════════════╝{/}
+{magenta-fg}┌─[ INTELLIGENCE ]───────┐{/}
+{magenta-fg}│{/} {red-fg}◉{/} {bright-white-fg}/scan{/}       alvo
+{magenta-fg}│{/} {red-fg}◉{/} {bright-white-fg}/weather{/}    setor
+{magenta-fg}│{/} {red-fg}◉{/} {bright-white-fg}/osint-*{/}    alvo
+{magenta-fg}│{/} {red-fg}◉{/} {bright-white-fg}/pentest-*{/}  alvo
+{magenta-fg}│{/} {red-fg}◉{/} {bright-white-fg}/pdf-*{/}      arquivo
+{magenta-fg}└──────────────────────────┘{/}
 
-{gray-fg}💡 Digite número ou comando{/}`;
+{gray-fg}Digite número ou comando completo{/}`;
     }
 
     // Processar input do usuário
@@ -469,12 +462,20 @@ Pressione qualquer tecla para fechar.`;
     // Alternar entre modos
     toggleMode() {
         if (this.currentMode === 'terminal') {
-            this.currentMode = 'gui';
-            this.initGUI();
+            this.setAdvancedMode();
         } else {
-            this.currentMode = 'terminal';
-            this.closeGUI();
+            this.setSimpleMode();
         }
+    }
+
+    setSimpleMode() {
+        this.currentMode = 'terminal';
+        this.closeGUI();
+    }
+
+    setAdvancedMode() {
+        this.currentMode = 'gui';
+        this.initGUI();
     }
 
     // Definir callback para input do usuário

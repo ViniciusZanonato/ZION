@@ -243,7 +243,7 @@ class CommandProcessor {
                 zion.interface.setSimpleMode();
                 console.log(chalk.green('✅ Interface alterada para modo SIMPLES'));
                 console.log(chalk.gray('   Interface minimalista ativada'));
-            } else if (interfaceType === 'avancada' || interfaceType === 'advanced') {
+            } else if (interfaceType === 'avancada' || interfaceType === 'avançada' || interfaceType === 'advanced') {
                 zion.interface.setAdvancedMode();
                 console.log(chalk.green('✅ Interface alterada para modo AVANÇADO'));
                 console.log(chalk.gray('   Interface completa ativada'));

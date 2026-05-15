@@ -4,8 +4,8 @@ const chalk = require('chalk');
 const fs = require('fs');
 
 class DatabaseModule {
-    constructor() {
-        this.dbPath = path.join(__dirname, '..', 'data', 'zion.db');
+    constructor(dbPath = path.join(__dirname, '..', 'data', 'zion.db')) {
+        this.dbPath = dbPath;
         this.db = null;
         this.initDatabase();
     }
@@ -44,7 +44,7 @@ class DatabaseModule {
                 assistant_response TEXT NOT NULL,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                 tokens_used INTEGER DEFAULT 0,
-                model_used TEXT DEFAULT 'gemini-2.5-pro'
+                model_used TEXT DEFAULT 'qwen3:8b'
             )`,
             
             // Tabela de configurações do usuário
@@ -87,7 +87,7 @@ class DatabaseModule {
     }
 
     // Salvar conversa
-    async saveConversation(sessionId, userMessage, assistantResponse, tokensUsed = 0, modelUsed = 'gemini-2.5-pro') {
+    async saveConversation(sessionId, userMessage, assistantResponse, tokensUsed = 0, modelUsed = 'qwen3:8b') {
         return new Promise((resolve, reject) => {
             const sql = `INSERT INTO conversations (session_id, user_message, assistant_response, tokens_used, model_used) 
                         VALUES (?, ?, ?, ?, ?)`;
@@ -239,15 +239,23 @@ class DatabaseModule {
 
     // Fechar conexão
     close() {
-        if (this.db) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                resolve();
+                return;
+            }
+
             this.db.close((err) => {
                 if (err) {
                     console.log(chalk.red(`Erro ao fechar banco: ${err.message}`));
+                    reject(err);
                 } else {
                     console.log(chalk.gray('📊 Conexão neural com banco encerrada'));
+                    this.db = null;
+                    resolve();
                 }
             });
-        }
+        });
     }
 
     // Estatísticas gerais do banco

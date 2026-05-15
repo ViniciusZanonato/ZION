@@ -547,7 +547,7 @@ class AdvancedAPIsModule {
     async sensorDataAnalysis(device) { return { sensors: Math.floor(Math.random() * 10) }; }
     async huggingFaceModels(model) { return { models: Math.floor(Math.random() * 1000) }; }
     async openAIModels(model) { return { models: ['GPT-4', 'DALL-E', 'Whisper'] }; }
-    async googleAIData(model) { return { models: ['Gemini', 'PaLM', 'LaMDA'] }; }
+    async googleAIData(model) { return { models: ['Ollama', 'Qwen3', 'Llama'] }; }
     async ibmWatsonData(model) { return { services: Math.floor(Math.random() * 20) }; }
     async tensorflowModels(model) { return { models: Math.floor(Math.random() * 500) }; }
 }

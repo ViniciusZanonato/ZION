@@ -187,7 +187,7 @@ class ConversationManager {
     }
     
     /**
-     * Obtém histórico formatado para o Gemini AI
+     * Obtém histórico formatado para o modelo local
      * @param {number} limit - Limite de mensagens
      * @returns {Array} Histórico formatado
      */

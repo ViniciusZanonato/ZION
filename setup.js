@@ -4,15 +4,15 @@ const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const { DEFAULT_OLLAMA_BASE_URL, DEFAULT_OLLAMA_MODEL } = require('./utils/ollama-client');
 
 console.log(chalk.cyan.bold('\n🤖 CONFIGURAÇÃO INICIAL DO ZION \n'));
 
 async function setup() {
     try {
-        // Verificar se .env já existe
         const envPath = path.join(__dirname, '.env');
-        let envExists = fs.existsSync(envPath);
-        
+        const envExists = fs.existsSync(envPath);
+
         if (envExists) {
             const { overwrite } = await inquirer.prompt([
                 {
@@ -22,34 +22,31 @@ async function setup() {
                     default: false
                 }
             ]);
-            
+
             if (!overwrite) {
                 console.log(chalk.yellow('\n⚠️  Configuração cancelada.'));
                 console.log(chalk.gray('Execute "npm start" para iniciar o ZION.\n'));
                 return;
             }
         }
-        
-        // Solicitar chave da API
-        const { apiKey } = await inquirer.prompt([
+
+        const { baseUrl, model } = await inquirer.prompt([
             {
-                type: 'password',
-                name: 'apiKey',
-                message: 'Digite sua chave da API do Google Gemini:',
-                mask: '*',
-                validate: (input) => {
-                    if (!input.trim()) {
-                        return 'A chave da API é obrigatória!';
-                    }
-                    if (input.length < 20) {
-                        return 'Chave da API muito curta. Verifique se está correta.';
-                    }
-                    return true;
-                }
+                type: 'input',
+                name: 'baseUrl',
+                message: 'URL local do Ollama:',
+                default: DEFAULT_OLLAMA_BASE_URL,
+                validate: (input) => input.trim().startsWith('http') || 'Informe uma URL válida, ex: http://127.0.0.1:11434'
+            },
+            {
+                type: 'input',
+                name: 'model',
+                message: 'Modelo Ollama padrão do ZION:',
+                default: DEFAULT_OLLAMA_MODEL,
+                validate: (input) => input.trim().length > 0 || 'Informe um modelo, ex: qwen3:8b'
             }
         ]);
-        
-        // Configurações opcionais
+
         const { advanced } = await inquirer.prompt([
             {
                 type: 'confirm',
@@ -58,25 +55,19 @@ async function setup() {
                 default: false
             }
         ]);
-        
-        let model = 'gemini-2.5-pro';
+
         let temperature = '0.7';
         let maxTokens = '2000';
+        let codeModel = model;
         let customPrompt = '';
-        
+
         if (advanced) {
             const advancedConfig = await inquirer.prompt([
                 {
-                    type: 'list',
-                    name: 'model',
-                    message: 'Escolha o modelo da IA:',
-                    choices: [
-                        { name: 'Gemini 2.5 Pro (Mais avançado)', value: 'gemini-2.5-pro' },
-                        { name: 'Gemini 1.5 Flash (Rápido)', value: 'gemini-1.5-flash' },
-                        { name: 'Gemini 1.5 Pro (Mais preciso)', value: 'gemini-1.5-pro' },
-                        { name: 'Gemini Pro', value: 'gemini-pro' }
-                    ],
-                    default: 'gemini-2.5-pro'
+                    type: 'input',
+                    name: 'codeModel',
+                    message: 'Modelo para tarefas de código/auto-modificação:',
+                    default: model
                 },
                 {
                     type: 'number',
@@ -96,8 +87,8 @@ async function setup() {
                     message: 'Máximo de tokens por resposta:',
                     default: 2000,
                     validate: (input) => {
-                        if (input < 100 || input > 8000) {
-                            return 'O número de tokens deve estar entre 100 e 8000';
+                        if (input < 100 || input > 16000) {
+                            return 'O número de tokens deve estar entre 100 e 16000';
                         }
                         return true;
                     }
@@ -109,62 +100,66 @@ async function setup() {
                     default: false
                 }
             ]);
-            
-            model = advancedConfig.model;
+
+            codeModel = advancedConfig.codeModel.trim() || model;
             temperature = advancedConfig.temperature.toString();
             maxTokens = advancedConfig.maxTokens.toString();
-            
+
             if (advancedConfig.customPrompt) {
                 const { prompt } = await inquirer.prompt([
                     {
                         type: 'input',
                         name: 'prompt',
                         message: 'Digite o prompt personalizado (uma linha):',
-                        default: 'Você é ZION, um chatbot supremo com IA avançada que roda no terminal.'
+                        default: 'Você é ZION, um chatbot local que roda no terminal usando Ollama.'
                     }
                 ]);
                 customPrompt = prompt.trim();
             }
         }
-        
-        // Criar conteúdo do .env
-        const envContent = `# Configuração da API do Gemini
-GEMINI_API_KEY=${apiKey}
+
+        const envContent = `# Ollama local
+OLLAMA_BASE_URL=${baseUrl.trim()}
+OLLAMA_MODEL=${model.trim()}
+OLLAMA_CODE_MODEL=${codeModel.trim()}
 
 # Configuração do servidor
 PORT=3000
 
 # Prompt personalizado para o ZION
-ZION_SYSTEM_PROMPT="${customPrompt || 'Você é ZION, um chatbot supremo com inteligência artificial avançada que roda no terminal. Você pode executar diversas tarefas como mostrar mapas em ASCII, criar tabelas, gráficos, fazer cálculos, pesquisas e muito mais. Sempre responda de forma útil e criativa, utilizando recursos visuais quando apropriado.'}"
+ZION_SYSTEM_PROMPT="${customPrompt || 'Você é ZION, um chatbot local com IA avançada que roda no terminal usando Ollama. Você pode executar diversas tarefas como mostrar mapas em ASCII, criar tabelas, gráficos, fazer cálculos, pesquisas e muito mais. Sempre responda de forma útil e criativa, utilizando recursos visuais quando apropriado.'}"
 
 # Configurações do modelo
-MODEL_NAME=${model}
 MAX_TOKENS=${maxTokens}
-TEMPERATURE=${temperature}`;
-        
-        // Salvar arquivo .env
+TEMPERATURE=${temperature}
+PDF_MAX_TOKENS=8000
+PDF_TEMPERATURE=0.3
+CODE_MAX_TOKENS=4000
+CODE_TEMPERATURE=0.1`;
+
         fs.writeFileSync(envPath, envContent);
-        
+
         console.log(chalk.green('\n✅ Configuração concluída com sucesso!'));
+        console.log(chalk.cyan('\nAntes de iniciar, garanta que o Ollama esteja rodando e que o modelo exista:'));
+        console.log(chalk.yellow(`ollama pull ${model.trim()}`));
         console.log(chalk.cyan('\n🚀 Para iniciar o ZION, execute:'));
         console.log(chalk.yellow('npm start'));
         console.log();
-        
-        // Perguntar se quer iniciar agora
+
         const { startNow } = await inquirer.prompt([
             {
                 type: 'confirm',
                 name: 'startNow',
                 message: 'Deseja iniciar o ZION agora?',
-                default: true
+                default: false
             }
         ]);
-        
+
         if (startNow) {
             console.log(chalk.cyan('\n🎆 Iniciando ZION...\n'));
             require('./zion.js');
         }
-        
+
     } catch (error) {
         console.error(chalk.red('\n❌ Erro durante a configuração:'), error.message);
         console.log(chalk.yellow('\nTente configurar manualmente editando o arquivo .env'));
@@ -176,4 +171,3 @@ if (require.main === module) {
 }
 
 module.exports = setup;
-
